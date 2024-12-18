@@ -1,5 +1,6 @@
 import express from 'express';
 import { AppDataSource } from './database/data-source';
+import { Product } from './entities/Product';
 
 /*
     get -> buscar informação
@@ -18,9 +19,12 @@ AppDataSource.initialize()
         console.error('Erro ao conectar ao banco de dados', error);
     });
 
-app.get('/bem-vindo', (request, response) => {
+app.get('/products', async (request, response) => {
     //response.send("<strong>Olá, mundo!</strong>")
-    response.json({ message: 'Ola, mundo' });
+
+    const productManager = AppDataSource.getRepository(Product)
+    const produtosNoBancoDados =  await productManager.find() // SELECT * FROM products
+    response.json(produtosNoBancoDados);
 });
 
 app.listen(3000, () => {

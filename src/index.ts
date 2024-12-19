@@ -1,13 +1,7 @@
 import express from 'express';
 import { AppDataSource } from './database/data-source';
 import { Product } from './entities/Product';
-
-/*
-    get -> buscar informação
-    post -> enviar informação e criar uma informacao
-    delete -> deletar informação
-    put -> atualizar informação
-*/
+import { Category } from './entities/Category';
 
 const app = express();
 
@@ -19,13 +13,29 @@ AppDataSource.initialize()
         console.error('Erro ao conectar ao banco de dados', error);
     });
 
+/* Rota de pegar todos os produtos */
 app.get('/products', async (request, response) => {
-    //response.send("<strong>Olá, mundo!</strong>")
-
-    const productManager = AppDataSource.getRepository(Product)
-    const produtosNoBancoDados =  await productManager.find() // SELECT * FROM products
-    response.json(produtosNoBancoDados);
+    const productRepository = AppDataSource.getRepository(Product);
+    const products = await productRepository.find({
+        order: {
+            price: 'DESC'
+        }
+    }); // SELECT * FROM products
+    response.json(products);
 });
+
+/* Rota de pegar um produto específico */
+app.get('/categories', async (request, response) => {
+    const categoryRepository = AppDataSource.getRepository(Category);
+    const categories = await categoryRepository.find();
+    response.json(categories);
+});
+
+/* Rota de cadastrar produto */
+
+app.post('/products', (request, response) => {
+    
+})
 
 app.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');

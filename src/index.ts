@@ -4,6 +4,7 @@ import { Product } from './entities/Product';
 import { Category } from './entities/Category';
 
 const app = express();
+app.use(express.json()) // SEMPRE passar para trabalhar com JSON
 
 AppDataSource.initialize()
     .then(() => {
@@ -33,8 +34,23 @@ app.get('/categories', async (request, response) => {
 
 /* Rota de cadastrar produto */
 
-app.post('/products', (request, response) => {
-    
+app.post('/products', async (request, response) => {
+   /* Recebe o body */
+    const body = request.body
+
+    /* Cria uma instância de produto */
+    const product = new Product()
+
+    /* Atribui os valores do body para o produto */
+    product.name = body.name
+    product.price = body.price
+    product.brand = body.brand
+    product.description = body.description
+
+    const productRepository = AppDataSource.getRepository(Product);
+    const productCreated = await productRepository.save(product)  // INSERT INTO products (name, price, brand, description) VALUES (...)
+
+    response.status(201).json(productCreated)
 })
 
 app.listen(3000, () => {

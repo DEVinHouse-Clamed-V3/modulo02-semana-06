@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import { AppDataSource } from './database/data-source';
 import { Product } from './entities/Product';
 import { Category } from './entities/Category';
@@ -54,16 +54,13 @@ app.get('/products/:id', async (request, response) => {
 /* Rota de deletar um produto */
 app.delete('/products/:id', async (request, response) => {
     try {
-
         const id = Number(request.params.id);
         const productDeleted = await productRepository.delete(id); // DELETE FROM products WHERE id = ?
 
         if (productDeleted.affected === 0) {
-            response
-                .status(404)
-                .json({
-                    error: 'Produto não encontrado e portanto não foi deletado',
-                });
+            response.status(404).json({
+                error: 'Produto não foi encontrado e portanto não foi deletado',
+            });
         } else {
             response.status(204).json();
         }
@@ -134,6 +131,53 @@ app.post('/categories', async (req, res) => {
     } catch (error) {
         console.log('Erro ao salvar a categoria', error);
         res.status(500).json({ message: 'Erro ao salvar a categoria' });
+    }
+});
+
+/* Rota de atualizar produto */
+app.put('/products/:id', async (request: Request, response) => {
+    try {
+        const id = Number(request.params.id);
+        const body = request.body; // dados que serão atualizados
+
+        if ('name' in body && !body.name) {
+            response
+                .status(400)
+                .json({ error: 'O campo nome não deve ser inválido' });
+        } else if ('price' in body && !body.price) {
+            response
+                .status(400)
+                .json({ error: 'O campo preço não deve ser inválido' });
+        } else if ('description' in body && !body.description) {
+            response
+                .status(400)
+                .json({ error: 'O campo  descrição não deve ser inválido' });
+        } else if ('brand' in body && !body.brand) {
+            response
+                .status(400)
+                .json({ error: 'O campo Marca não deve ser inválido' });
+        } else {
+            
+            const productInDatabase = await productRepository.findOne({
+                where: { id },
+            });
+
+            if (!productInDatabase) {
+                response.status(404).json({ error: 'Produto não encontrado' });
+            } else {
+                productInDatabase.name = body.name;
+                productInDatabase.price = body.price;
+                productInDatabase.brand = body.brand;
+                productInDatabase.description = body.description;
+                productInDatabase.status = body.status;
+
+                const productUpdated =
+                    await productRepository.save(productInDatabase);
+                response.json(productUpdated);
+            }
+        }
+    } catch {
+        response.status(500).json({ error: 'Erro ao atualizar produto' });
     }
 });
 

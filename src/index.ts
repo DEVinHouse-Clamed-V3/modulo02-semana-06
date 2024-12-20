@@ -14,10 +14,12 @@ AppDataSource.initialize()
         console.error('Erro ao conectar ao banco de dados', error);
     });
 
+const productRepository = AppDataSource.getRepository(Product);
+const categoryRepository = AppDataSource.getRepository(Category);
+
 /* Rota de pegar todos os produtos */
 app.get('/products', async (request, response) => {
     try {
-        const productRepository = AppDataSource.getRepository(Product);
         const products = await productRepository.find({
             order: {
                 price: 'DESC',
@@ -29,10 +31,30 @@ app.get('/products', async (request, response) => {
     }
 });
 
+/* Rota de pegar um produto pelo id */
+app.get('/products/:id', async (request, response) => {
+    try {
+        const id = Number(request.params.id);
+        const productInDatabase = await productRepository.findOne({
+            where: {
+                id: id
+            },
+        }); // SELECT * FROM products WHERE id = ?
+
+        if(!productInDatabase) {
+            response.status(404).json({error: 'Produto não encontrado'});
+        } else {
+            response.json(productInDatabase)
+        }
+
+    } catch {
+        response.status(500).json({ error: 'Erro ao buscar produto' });
+    }
+});
+
 /* Rota de pegar um produto específico */
 app.get('/categories', async (request, response) => {
     try {
-        const categoryRepository = AppDataSource.getRepository(Category);
         const categories = await categoryRepository.find();
         response.json(categories);
     } catch {
@@ -66,7 +88,6 @@ app.post('/products', async (request, response) => {
             product.brand = body.brand;
             product.description = body.description;
 
-            const productRepository = AppDataSource.getRepository(Product);
             const productCreated = await productRepository.save(product); // INSERT INTO products (name, price, brand, description) VALUES (...)
 
             response.status(201).json(productCreated);
@@ -74,6 +95,25 @@ app.post('/products', async (request, response) => {
     } catch (error) {
         console.log(error);
         response.status(500).json({ error: 'Erro ao cadastrar produto' });
+    }
+});
+
+app.post('/categories', async (req, res) => {
+    try {
+        const body = req.body;
+
+        if (!body.name) {
+            res.status(400).json({ message: 'O campo nome é obrigatório' });
+        } else {
+            const category = new Category();
+            category.name = body.name;
+
+            const createdCategory = await categoryRepository.save(category); // = insert into no sql
+            res.status(201).json(createdCategory);
+        }
+    } catch (error) {
+        console.log('Erro ao salvar a categoria', error);
+        res.status(500).json({ message: 'Erro ao salvar a categoria' });
     }
 });
 

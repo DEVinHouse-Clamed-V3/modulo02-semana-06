@@ -37,18 +37,38 @@ app.get('/products/:id', async (request, response) => {
         const id = Number(request.params.id);
         const productInDatabase = await productRepository.findOne({
             where: {
-                id: id
+                id: id,
             },
         }); // SELECT * FROM products WHERE id = ?
 
-        if(!productInDatabase) {
-            response.status(404).json({error: 'Produto não encontrado'});
+        if (!productInDatabase) {
+            response.status(404).json({ error: 'Produto não encontrado' });
         } else {
-            response.json(productInDatabase)
+            response.json(productInDatabase);
         }
-
     } catch {
         response.status(500).json({ error: 'Erro ao buscar produto' });
+    }
+});
+
+/* Rota de deletar um produto */
+app.delete('/products/:id', async (request, response) => {
+    try {
+
+        const id = Number(request.params.id);
+        const productDeleted = await productRepository.delete(id); // DELETE FROM products WHERE id = ?
+
+        if (productDeleted.affected === 0) {
+            response
+                .status(404)
+                .json({
+                    error: 'Produto não encontrado e portanto não foi deletado',
+                });
+        } else {
+            response.status(204).json();
+        }
+    } catch {
+        response.status(500).json({ error: 'Erro ao deletar produto' });
     }
 });
 
